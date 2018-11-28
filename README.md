@@ -1,6 +1,8 @@
-# test-vue
+# calendar-vue/mpvue
 
-> A Vue.js project
+> vue 和  mpvue 通用的移动设备组件
+
+文件路径： src/components/calendar.vue
 
 ## Build Setup
 
