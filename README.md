@@ -4,6 +4,15 @@
 
 文件路径： src/components/calendar.vue
 
+## 功能
+1.支持农历和节假日（农历1900-2100）
+2.支持左右滑动切换，和点击箭头切换
+3.点击‘重置’按钮，回到当前日期
+4.点击‘取消’按钮和灰色背景隐藏组件
+5.支持特殊日期标记圆点
+
+截图：http://f1-snap.oss-cn-beijing.aliyuncs.com/simditor/2018-11-28_182955.334792.png
+
 ## Build Setup
 
 ``` bash
