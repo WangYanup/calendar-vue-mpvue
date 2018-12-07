@@ -364,6 +364,9 @@ export default {
 </script>
 <style lang="scss" scoped>
   $rpx: 0.5px;
+  $topic-color: #32DA31;
+  $orange-color: #FFB62E;
+  $weekday-color: #fff3dd;
 
   .calendar-container {
     position: fixed;
@@ -396,7 +399,7 @@ export default {
         margin: 0 5%;
 
         .calendar-title-confirm {
-          color: #32DA31;
+          color: $topic-color;
           flex-shrink: 0;
         }
 
@@ -498,25 +501,21 @@ export default {
             }
 
             .calendar-day-item-flag-checked {
-              background-color: #FFB62E;
+              background-color: $orange-color;
             }
           }
 
-          .week-6 {
-            background-color: #ddffdd;
-          }
-
           .week-7 {
-            background-color: #fff3dd;
+            background-color: $weekday-color;
           }
 
           .calendar-checked-default {
-            background-color: #32DA31;
+            background-color: $topic-color;
             color: #ffffff;
           }
 
           .calendar-checked {
-            background-color: #FFB62E;
+            background-color: $orange-color;
             color: #ffffff;
           }
 

@@ -23,20 +23,21 @@ export default {
   },
   data () {
     return {
-      dataForCalendar: {
-        '2018': {
-          '11': [
-            {day: '1', text: 'test1'},
-            {day: '2', text: 'test2'},
-            {day: '3', text: 'test3'},
-            {day: '4', text: 'test4'},
-            {day: '5', text: 'test5'}
-          ]
-        }
-      },
+      dataForCalendar: {},
       chooseDate: '',
       showCalendar: false
     }
+  },
+  mounted () {
+    let timestamp = new Date()
+    this.dataForCalendar[timestamp.getFullYear()] = {}
+    this.dataForCalendar[timestamp.getFullYear()][timestamp.getMonth() + 1] = [
+      {day: '1', text: 'test1'},
+      {day: '2', text: 'test2'},
+      {day: '3', text: 'test3'},
+      {day: '4', text: 'test4'},
+      {day: '5', text: 'test5'}
+    ]
   },
   methods: {
     getChooseDate (e) {
