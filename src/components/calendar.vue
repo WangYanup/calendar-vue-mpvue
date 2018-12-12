@@ -34,6 +34,7 @@
               'calendar-checked-default':chooseToday === day.id,
               'calendar-checked': chooseDay === day.id}"
           >{{day.number}}</span>
+          <span class="calendar-day-item-holiday" v-if="day.holiday">休</span>
           <span class="calendar-day-item-text" v-if="day !== ''">{{day.text?day.text:''}}</span>
           <span class="calendar-day-item-flag" :class="{'calendar-day-item-flag-checked': day.haveFlag}" v-if="day !== ''"></span>
           </div>
@@ -44,6 +45,7 @@
 </template>
 <script>
 import Calendar from '@/plugs/chinese-calendar';
+import HolidayData from '@/plugs/holiday.data';
 
 export default {
   /***
@@ -55,6 +57,7 @@ export default {
    * 3.点击‘重置’按钮，回到当前日期
    * 4.点击‘取消’按钮和灰色背景隐藏组件
    * 5.支持特殊日期标记圆点
+   * 6.假期显示，需要在plugs/holida.data.js手动添加数据
    *
    * 参数说明：
    * :params.id  可以在同一个页面使用多个此组件，返回日期的时候会携带id
@@ -192,6 +195,19 @@ export default {
             if (parseInt(this.flagArr[i].day) === monthDay) {
               obj.haveFlag = true;
               break;
+            }
+          }
+        }
+
+        // 判断是否为假期
+        if (HolidayData[year] && HolidayData[year][month]) {
+          let holidayArr = HolidayData[year][month];
+          if (holidayArr.length > 0) {
+            for (let i = 0; i < holidayArr.length; i++) {
+              if (holidayArr[i] === monthDay) {
+                obj.holiday = true;
+                break;
+              }
             }
           }
         }
@@ -472,6 +488,7 @@ export default {
           flex-flow: row nowrap;
 
           .calendar-day-item {
+            position: relative;
             text-align: center;
             flex-basis: calc(100% / 7);
             padding: 16*$rpx 0;
@@ -479,6 +496,7 @@ export default {
             justify-content: center;
             align-items: center;
             flex-flow: column nowrap;
+
             .calendar-day-item-num {
               width: 48*$rpx;
               height: 48*$rpx;
@@ -486,6 +504,15 @@ export default {
               line-height: 48*$rpx;
               border-radius: 100%;
               font-weight: bold;
+            }
+
+            .calendar-day-item-holiday {
+              position: absolute;
+              right: 8*$rpx;
+              top: 40%;
+              transform: translateY(-40%);
+              font-size: 10px;
+              color: $orange-color;
             }
 
             .calendar-day-item-text  {
