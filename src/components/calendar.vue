@@ -1,12 +1,12 @@
 <template>
   <div class="calendar-container" v-if="showCalendar">
-    <div class="calendar-bg" @click="hideCalendar({emitStatu: true})"></div>
+    <div class="calendar-bg" @click="hideCalendar({emitStatus: true})"></div>
     <div class="calendar-body"
       @touchstart="bindTouchStart"
       @touchend="bindTouchEnd"
     >
       <div class="calendar-title">
-        <span class="calendar-title-cancle" @click="hideCalendar({emitStatu: true})">取消</span>
+        <span class="calendar-title-cancle" @click="hideCalendar({emitStatus: true})">取消</span>
         <div class="calendar-title-choose">
           <span class="calendar-title-icon calendar-title-icon-left" @click="preMonth"></span>
           <span class="calendar-title-show"><span>{{year}} - {{month}}</span></span>
@@ -48,9 +48,8 @@
   </div>
 </template>
 <script>
-import Calendar from '@/plugs/chinese-calendar';
-import HolidayData from '@/plugs/holiday.data';
 import CalendarResult from './calendar.result';
+import ShowDayObject from './show.day';
 
 export default {
   /***
@@ -114,59 +113,45 @@ export default {
       immediate: true,
       handler () {
         if (this.year && this.month) {
-          this.setFlagArr();
+          this.constFlagArr();
         }
       }
     }
   },
   computed: {
     chooseDayStartTimeStamp (val) {
-      return new Date(this.chooseDayStart).getTime();
+      if (this.chooseDayStart) {
+        return new Date(this.chooseDayStart.replace('-', '/')).getTime();
+      }
     },
     chooseDayEndTimeStamp (val) {
-      return new Date(this.chooseDayEnd).getTime();
+      if (this.chooseDayEnd) {
+        return new Date(this.chooseDayEnd.replace('-', '/')).getTime();
+      }
     }
   },
   mounted () {
     this.calendarResult = new CalendarResult();
-    let date = new Date();
 
     this.todayObj = {
-      year: date.getFullYear(),
-      month: date.getMonth() + 1,
-      day: date.getDate()
+      y: new Date().getFullYear(),
+      m: new Date().getMonth() + 1,
+      d: new Date().getDate()
     };
 
-    this.chooseToday = this.todayObj.year + '-' + this.todayObj.month + '-' + this.todayObj.day;
+    this.chooseToday = this.todayObj.y + '-' + this.todayObj.m + '-' + this.todayObj.d;
 
     if (this.params.minDate) {
-      let splitArr = this.params.minDate.split('-');
-      this.limitMinDate = {
-        y: splitArr[0] * 1,
-        m: splitArr[1] * 1,
-        d: splitArr[2] * 1
-      };
+      this.limitMinDate = this.getSplitDate(this.params.minDate);
     }
 
     if (this.params.maxDate) {
-      let splitArr = this.params.maxDate.split('-');
-      this.limitMaxDate = {
-        y: splitArr[0] * 1,
-        m: splitArr[1] * 1,
-        d: splitArr[2] * 1
-      };
+      this.limitMaxDate = this.getSplitDate(this.params.maxDate);
     }
 
     if (this.params.chooseDayTextStart) {
       this.setChooseDay({start: this.params.chooseDayTextStart});
-      let splitArr = this.params.chooseDayTextStart.split('-');
-      let request = {
-        year: splitArr[0] * 1,
-        month: splitArr[1] * 1,
-        day: splitArr[2] * 1
-      };
-
-      this.setDateParams(request);
+      this.setDateParams(this.getSplitDate(this.params.chooseDayTextStart));
     } else {
       this.setDateParams(this.todayObj);
     }
@@ -176,123 +161,45 @@ export default {
     }
   },
   methods: {
-    setDateParams (obj) {
-      this.year = obj.year;
-      this.month = obj.month;
-      this.day = obj.day;
-
-      this.setFlagArr();
+    getSplitDate (target) {
+      return {
+        y: target.split('-')[0] * 1,
+        m: target.split('-')[1] * 1,
+        d: target.split('-')[2] * 1
+      }
     },
 
-    setFlagArr () {
+    setDateParams (obj) {
+      this.setGlobalDate(obj);
+      this.constFlagArr();
+    },
+
+    setGlobalDate (obj) {
+      this.year = obj.y;
+      this.month = obj.m;
+      this.day = obj.d;
+    },
+
+    constFlagArr () {
       // 判断是否有需要特殊显示的日期
-      if (this.activityData && this.activityData[parseInt(this.year)] && this.activityData[parseInt(this.year)][parseInt(this.month)]) {
-        this.flagArr = this.activityData[parseInt(this.year)][parseInt(this.month)];
+      if (this.activityData) {
+        let flagYear = this.activityData[parseInt(this.year)];
+        if (flagYear && flagYear[parseInt(this.month)]) {
+          this.flagArr = flagYear[parseInt(this.month)];
+        }
       }
 
-      this.getShowDayList();
+      this.constShowDayData();
     },
 
-    getShowDayList () {
-      this.dayData = [];
-      let row = [];
-      for (let i = 1; i < 42; i++) { // 7 * 5line
-        let day = new Date(this.year, this.month - 1, i);
-        let weekDay = day.getDay();
-        let month = day.getMonth() + 1;
-        let monthDay = day.getDate();
-        let year = day.getFullYear();
-        let str = `${year}-${month}-${monthDay}`;
-
-        let obj = {
-          text: null,
-          id: str,
-          timestamp: new Date(str).getTime(),
-          number: null,
-          disabled: false,
-          haveFlag: false
-        };
-
-        // 判断是否突出显示当天日期，例如当天有活动
-        if (this.flagArr) {
-          for (let i = 0; i < this.flagArr.length; i++) {
-            if (parseInt(this.flagArr[i].day) === monthDay) {
-              obj.haveFlag = true;
-              break;
-            }
-          }
-        }
-
-        // 判断是否为假期
-        if (HolidayData[year] && HolidayData[year][month]) {
-          let holidayArr = HolidayData[year][month];
-          if (holidayArr.length > 0) {
-            for (let i = 0; i < holidayArr.length; i++) {
-              if (holidayArr[i] === monthDay) {
-                obj.holiday = true;
-                break;
-              }
-            }
-          }
-        }
-
-        // 假期，农历显示
-        let calendarTextObj = Calendar.solar2lunar(year, month, monthDay);
-        if (calendarTextObj.festival.length > 0) {
-          obj.text = calendarTextObj.festival[0];
-        } else
-        if (calendarTextObj.IMonthCn && calendarTextObj.IDayCn) {
-          if (calendarTextObj.IDayCn === '初一') {
-            obj.text = calendarTextObj.IMonthCn;
-          } else {
-            obj.text = calendarTextObj.IDayCn;
-          }
-        }
-
-        // 限制选取最小日期
-        if (this.limitMinDate && (year < this.limitMinDate.y ||
-          (year === this.limitMinDate.y && month < this.limitMinDate.m) ||
-          (year === this.limitMinDate.y && month === this.limitMinDate.m && monthDay < this.limitMinDate.d))
-        ) {
-          obj.disabled = true;
-        }
-
-        // 限制选取最大日期
-        if (this.limitMaxDate && (year > this.limitMaxDate.y ||
-          (year === this.limitMaxDate.y && month > this.limitMaxDate.m) ||
-          (year === this.limitMaxDate.y && month === this.limitMaxDate.m && monthDay > this.limitMaxDate.d))
-        ) {
-          obj.disabled = true;
-        }
-
-        // 构造本月的日历数据
-        if (month === this.month) {
-          if (i === 1) {
-            // 判断第一天的日期，
-            // @d 用于控制第一天显示的星期 （d = 0 开头为星期日 / d = 1 开头为星期一）
-            for (let d = 1; d < weekDay; d++) {
-              row.push('');
-            }
-
-            obj.number = monthDay;
-            row.push(obj);
-          } else {
-            obj.number = monthDay;
-            row.push(obj);
-          }
-        } else {
-          row.push('');
-        }
-
-        if (row.length % 7 === 0) {
-          if (i > 35 && row[0] === '') {
-            row = [];
-            return;
-          }
-          this.dayData.push(row);
-          row = [];
-        }
-      };
+    constShowDayData () {
+      this.dayData = new ShowDayObject({
+        year: this.year, 
+        month: this.month, 
+        flagArr: this.flagArr, 
+        limitMaxDate: this.limitMaxDate, 
+        limitMinDate: this.limitMinDate
+      }).getVal();
     },
 
     preMonth () {
@@ -305,15 +212,15 @@ export default {
 
     setMonth (month) {
       let setDate = new Date(this.year, month - 1, this.day);
-      let params = {
-        year: setDate.getFullYear(),
-        month: setDate.getMonth() + 1,
-        day: setDate.getDate()
+      let result = {
+        y: setDate.getFullYear(),
+        m: setDate.getMonth() + 1,
+        d: setDate.getDate()
       };
 
       this.flagArr = null;
-      this.setDateParams(params);
-      this.$emit('changeDate', params);
+      this.setDateParams(result);
+      this.$emit('changeDate', result);
     },
 
     chooseDate (params) {
@@ -359,39 +266,29 @@ export default {
 
     doneChooseDate () {
       this.$emit('chooseDate', this.calendarResult.resultVal);
-      this.hideCalendar({emitStatu: false});
+      this.hideCalendar({emitStatus: false});
     },
 
     resetCalendar () {
       this.setChooseDay({start: null, end: null});
       this.$emit('chooseDate', this.calendarResult.resetResult);
-      this.hideCalendar({emitStatu: false});
+      this.hideCalendar({emitStatus: false});
     },
 
     hideCalendar (e) {
       this.showCalendar = false;
-      if (e.emitStatu) {
+      if (e.emitStatus) {
         this.emitGetActivityParams();
       }
       this.$emit('hideChooseDate');
     },
  
     emitGetActivityParams () {
-      let params = null;
-      if (this.params.chooseDayTextStart) {
-        let splitArr = this.params.chooseDayTextStart.split('-');
-        // 返回参数值类型 String
-        params = {
-          year: splitArr[0],
-          month: splitArr[1],
-          day: splitArr[2]
-        };
-      } else {
-        // 返回参数值类型 Number
-        params = this.todayObj;
-      }
+      if (!this.params.chooseDayTextStart) {
+        return
+      } 
 
-      this.$emit('changeDate', params);
+      this.$emit('changeDate', {startDate: this.getSplitDate(this.params.chooseDayTextStart), endDate: this.getSplitDate(this.params.chooseDayTextEnd)});
     },
 
     bindTouchStart (e) {
