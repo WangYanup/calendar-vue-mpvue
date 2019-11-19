@@ -56,17 +56,10 @@ export default {
   /***
    * 说明：日历组件，适用于vue,mpvue
    * 需求：node-sass, sass-loader (配置方式请百度)
-   * 功能：
-   * 1.支持农历和节假日（农历1900-2100）
-   * 2.支持左右滑动切换，和点击箭头切换
-   * 3.点击‘重置’按钮，回到当前日期
-   * 4.点击‘取消’按钮和灰色背景隐藏组件
-   * 5.支持特殊日期标记圆点
-   * 6.假期显示，需要在plugs/holida.data.js手动添加数据
-   *
    * 参数说明：
    * :params.id  可以在同一个页面使用多个此组件，返回日期的时候会携带id
-   * :params.chooseDayText  选择的日期 '2018-1-2'
+   * :params.chooseDayTextStart  选择的日期 '2018-1-2'
+   * :params.chooseDayTextEnd  选择的日期 '2018-1-2'
    * :params.minDate  最小选择日期 '2018-10-11'
    * :params.maxDate  最大选择日期 '2019-2-10'
    * :activityData  有活动的日期显示flag圆点 {year:{ month:[]}} 月和日小于10不可以有0，01 =》1
@@ -90,7 +83,7 @@ export default {
     activityData: Object,
     type: {
       type: String,
-      default: 'oneDay' // oneDay, rangeDay
+      default: 'rangeDay' // default, rangeDay
     }
   },
   data () {
@@ -342,7 +335,7 @@ export default {
       }
       
       // 选择某一天时
-      if (this.type === 'oneDay') {
+      if (this.type === 'default') {
         this.doneChooseDate();
         return;
       }
