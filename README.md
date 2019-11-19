@@ -16,8 +16,8 @@
 ```
 
 截图：
-![单个日期选择]（https://github.com/WangYanup/calendar-vue-mpvue/blob/master/src/assets/one.png）
-![范围日期选择]（https://github.com/WangYanup/calendar-vue-mpvue/blob/master/src/assets/range.png）
+![单个日期选择](https://github.com/WangYanup/calendar-vue-mpvue/blob/master/src/assets/one.png)
+![范围日期选择](https://github.com/WangYanup/calendar-vue-mpvue/blob/master/src/assets/range.png)
 
 ## 项目构建
 ``` bash
