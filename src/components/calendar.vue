@@ -22,8 +22,10 @@
       <div class="calendar-day">
         <div v-for="(item, index) in dayData" :key="index" class="calendar-day-row">
           <div v-for="(day, dindex) in item" :key="dindex" class="calendar-day-item"
-            :class="{'week-7': day!== '' && (dindex === 5 || dindex === 6),
-              'calendar-disabled': day.disabled
+            :class="{
+              'week-7': day!== '' && (dindex === 5 || dindex === 6),
+              'calendar-disabled': day.disabled,
+              'calendar-choose-range': day.timestamp >= chooseDayStartTimeStamp && day.timestamp <= chooseDayEndTimeStamp && type === 'rangeDay'
             } "
             :id="day.id"
             @click="chooseDate(day)"
@@ -32,7 +34,9 @@
             v-if="day !== ''"
             :class="{
               'calendar-checked-default':chooseToday === day.id,
-              'calendar-checked': chooseDay === day.id}"
+              'calendar-checked-start': chooseDayStart === day.id,
+              'calendar-checked-end': chooseDayEnd === day.id
+            }"
           >{{day.number}}</span>
           <span class="calendar-day-item-holiday" v-if="day.holiday">休</span>
           <span class="calendar-day-item-text" v-if="day !== ''">{{day.text?day.text:''}}</span>
@@ -46,6 +50,7 @@
 <script>
 import Calendar from '@/plugs/chinese-calendar';
 import HolidayData from '@/plugs/holiday.data';
+import CalendarResult from './calendar.result';
 
 export default {
   /***
@@ -78,11 +83,21 @@ export default {
    * 2. 默认是px单位，可以修改 $rpx: 1rpx; 变量改为 rpx
    **/
   name: 'comCalendar',
-  props: ['params', 'activityData'],
+  props: {
+    params: {
+      type: Object
+    },
+    activityData: Object,
+    type: {
+      type: String,
+      default: 'oneDay' // oneDay, rangeDay
+    }
+  },
   data () {
     return {
       todayObj: {},
-      chooseDay: '', // 选择的日期
+      chooseDayStart: '', // 选择的日期
+      chooseDayEnd: '',
       chooseToday: '',
       year: '',
       month: '',
@@ -94,9 +109,11 @@ export default {
       showCalendar: true,
       flagArr: null,
       checkedMonthFlagArr: null,
-
       touchObj: {},
-      touchLimit: 30 // px
+      touchLimit: 30, // px
+
+      calendarResult: null,
+      result: {}
     };
   },
   watch: {
@@ -109,7 +126,16 @@ export default {
       }
     }
   },
+  computed: {
+    chooseDayStartTimeStamp (val) {
+      return new Date(this.chooseDayStart).getTime();
+    },
+    chooseDayEndTimeStamp (val) {
+      return new Date(this.chooseDayEnd).getTime();
+    }
+  },
   mounted () {
+    this.calendarResult = new CalendarResult();
     let date = new Date();
 
     this.todayObj = {
@@ -120,7 +146,7 @@ export default {
 
     this.chooseToday = this.todayObj.year + '-' + this.todayObj.month + '-' + this.todayObj.day;
 
-    if (this.params && this.params.minDate) {
+    if (this.params.minDate) {
       let splitArr = this.params.minDate.split('-');
       this.limitMinDate = {
         y: splitArr[0] * 1,
@@ -129,7 +155,7 @@ export default {
       };
     }
 
-    if (this.params && this.params.maxDate) {
+    if (this.params.maxDate) {
       let splitArr = this.params.maxDate.split('-');
       this.limitMaxDate = {
         y: splitArr[0] * 1,
@@ -138,9 +164,9 @@ export default {
       };
     }
 
-    if (this.params && this.params.chooseDayText) {
-      this.chooseDay = this.params.chooseDayText;
-      let splitArr = this.params.chooseDayText.split('-');
+    if (this.params.chooseDayTextStart) {
+      this.setChooseDay({start: this.params.chooseDayTextStart});
+      let splitArr = this.params.chooseDayTextStart.split('-');
       let request = {
         year: splitArr[0] * 1,
         month: splitArr[1] * 1,
@@ -150,6 +176,10 @@ export default {
       this.setDateParams(request);
     } else {
       this.setDateParams(this.todayObj);
+    }
+
+    if (this.params.chooseDayTextEnd) {
+      this.setChooseDay({end: this.params.chooseDayTextEnd});
     }
   },
   methods: {
@@ -184,6 +214,7 @@ export default {
         let obj = {
           text: null,
           id: str,
+          timestamp: new Date(str).getTime(),
           number: null,
           disabled: false,
           haveFlag: false
@@ -293,35 +324,54 @@ export default {
     },
 
     chooseDate (params) {
-      if (!params.disabled) {
-        this.chooseDay = params.id;
+      if (params.disabled) {
+        return;
+      }
+      
+      // 没有选择任何时间的时候，重置日历显示
+      if (!this.calendarResult.resultVal.startDate) {
+        this.setChooseDay({start: null, end: null});
+      }
 
-        let arr = params.id.split('-');
-        let result = {
-          data: params.id,
-          y: arr[0],
-          m: arr[1],
-          d: arr[2],
-          id: this.params.id
-        };
-
-        this.$emit('chooseDate', result);
-        this.hideCalendar({emitStatu: false});
+      // 设置时间
+      this.calendarResult.setForDate(params);
+      
+      // 获取开始时间
+      if (this.calendarResult.resultVal.startDate) {
+        this.setChooseDay({start: this.calendarResult.resultVal.startDate});
+      }
+      
+      // 选择某一天时
+      if (this.type === 'oneDay') {
+        this.doneChooseDate();
+        return;
+      }
+      
+      // 选择时间范围
+      if (this.calendarResult.resultVal.endDate) {
+        this.setChooseDay({end: this.calendarResult.resultVal.endDate});
+        this.doneChooseDate();
       }
     },
 
+    setChooseDay ({start, end}) {
+      if (start !== undefined) {
+        this.chooseDayStart = start;
+      }
+
+      if (end !== undefined) {
+        this.chooseDayEnd = end;
+      }
+    },
+
+    doneChooseDate () {
+      this.$emit('chooseDate', this.calendarResult.resultVal);
+      this.hideCalendar({emitStatu: false});
+    },
+
     resetCalendar () {
-      this.chooseDay = null;
-
-      let result = {
-        data: undefined,
-        y: null,
-        m: null,
-        d: null,
-        id: this.params.id
-      };
-
-      this.$emit('chooseDate', result);
+      this.setChooseDay({start: null, end: null});
+      this.$emit('chooseDate', this.calendarResult.resetResult);
       this.hideCalendar({emitStatu: false});
     },
 
@@ -332,22 +382,20 @@ export default {
       }
       this.$emit('hideChooseDate');
     },
-
+ 
     emitGetActivityParams () {
       let params = null;
-      if (this.params && this.params.chooseDayText) {
-        let splitArr = this.params.chooseDayText.split('-');
+      if (this.params.chooseDayTextStart) {
+        let splitArr = this.params.chooseDayTextStart.split('-');
+        // 返回参数值类型 String
         params = {
           year: splitArr[0],
           month: splitArr[1],
           day: splitArr[2]
         };
       } else {
-        params = {
-          year: this.todayObj.year,
-          month: this.todayObj.month,
-          day: this.todayObj.day
-        };
+        // 返回参数值类型 Number
+        params = this.todayObj;
       }
 
       this.$emit('changeDate', params);
@@ -536,12 +584,21 @@ export default {
             background-color: $weekday-color;
           }
 
+          .calendar-choose-range {
+            background-color: #eaecc1;
+          }
+
           .calendar-checked-default {
             background-color: $topic-color;
             color: #ffffff;
           }
 
-          .calendar-checked {
+          .calendar-checked-start {
+            background-color: $orange-color;
+            color: #ffffff;
+          }
+
+          .calendar-checked-end {
             background-color: $orange-color;
             color: #ffffff;
           }

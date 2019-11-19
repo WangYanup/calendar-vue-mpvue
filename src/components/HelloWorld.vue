@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <com-calendar
-      :params="{chooseDayText: chooseDate?chooseDate:null}"
+      :params="{chooseDayTextStart: chooseDate.startDate, chooseDayTextEnd: chooseDate.endDate}"
       :activity-data="dataForCalendar"
       @chooseDate="getChooseDate"
       @changeDate="tapChangeDate"
@@ -41,7 +41,8 @@ export default {
   },
   methods: {
     getChooseDate (e) {
-      this.chooseDate = e.data
+      console.log(e)
+      this.chooseDate = e
     },
 
     tapChangeDate (e) {
