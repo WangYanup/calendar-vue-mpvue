@@ -1,16 +1,14 @@
+// 可以自由设置假期日期，对应日期会显示“休”
 const Holiday = {
-  '2018': {
-    '12': [30, 31]
-  },
   '2019': {
-    '1': [1],
-    '2': [4, 5, 6, 7, 8, 9, 10],
-    '4': [5, 6, 7],
-    '5': [1],
-    '6': [7, 8, 9],
-    '9': [13, 14, 15],
-    '10': [1, 2, 3, 4, 5, 6, 7]
+    '10': [29, 30]
   }
-};
+}
 
-export default Holiday;
+let constHolidayData = () => {
+  let now = new Date()
+  Holiday[now.getFullYear()][now.getMonth() + 1] = [1, 3, 5, 10, 15]
+}
+constHolidayData()
+
+export default Holiday
