@@ -61,6 +61,7 @@ export default {
    * :params.chooseDayTextEnd  选择的日期 '2018-1-2'
    * :params.minDate  最小选择日期 '2018-10-11'
    * :params.maxDate  最大选择日期 '2019-2-10'
+   * :holidayData 假日日期设置
    * :activityData  有活动的日期显示flag圆点 {year:{ month:[]}} 月和日小于10不可以有0，01 =》1
    *
    * 函数说明：
@@ -80,6 +81,7 @@ export default {
       type: Object
     },
     activityData: Object,
+    holidayData: Object,
     type: {
       type: String,
       default: 'rangeDay' // default, rangeDay
@@ -103,7 +105,6 @@ export default {
       checkedMonthFlagArr: null,
       touchObj: {},
       touchLimit: 30, // px
-
       calendarResult: null,
       result: {}
     };
@@ -131,7 +132,7 @@ export default {
     }
   },
   mounted () {
-    this.calendarResult = new CalendarResult();
+    this.calendarResult = new CalendarResult({id: this.params.id});
 
     this.todayObj = {
       y: new Date().getFullYear(),
@@ -198,7 +199,8 @@ export default {
         month: this.month, 
         flagArr: this.flagArr, 
         limitMaxDate: this.limitMaxDate, 
-        limitMinDate: this.limitMinDate
+        limitMinDate: this.limitMinDate,
+        holidayData: this.holidayData
       }).getVal();
     },
 

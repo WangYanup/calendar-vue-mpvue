@@ -4,6 +4,10 @@ class CalendarResultDate {
    * @param {String} params 2019-11-10
 
    */
+  constructor ({id}) {
+    this.id = id || 'default'
+  }
+
   setForDate (params) {
     if (!this.startDate) {
       this.setStartTime(params)
@@ -33,7 +37,8 @@ class CalendarResultDate {
   get resultVal () {
     return {
       startDate: this.startDate,
-      endDate: this.endDate
+      endDate: this.endDate,
+      id: this.id
     }
   }
 }

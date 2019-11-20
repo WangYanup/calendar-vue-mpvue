@@ -1,8 +1,15 @@
 <template>
   <div class="container">
     <com-calendar
-      :params="{chooseDayTextStart: chooseDate.startDate, chooseDayTextEnd: chooseDate.endDate}"
+      :params="{
+        chooseDayTextStart: chooseDate.startDate,
+        chooseDayTextEnd: chooseDate.endDate,
+        minDate: '2019-10-1',
+        maxDate: '2020-1-1',
+        id: 'aaaa'
+      }"
       :activity-data="dataForCalendar"
+      :holiday-data="holidayData"
       @chooseDate="getChooseDate"
       @changeDate="tapChangeDate"
       @hideChooseDate="hideChooseDate"
@@ -15,6 +22,7 @@
 
 <script>
 import comCalendar from '@/components/calendar'
+import HolidayData from '@/plugs/holiday.data'
 
 export default {
   name: 'HelloWorld',
@@ -25,7 +33,8 @@ export default {
     return {
       dataForCalendar: {},
       chooseDate: '',
-      showCalendar: false
+      showCalendar: false,
+      holidayData: HolidayData
     }
   },
   mounted () {
