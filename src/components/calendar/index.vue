@@ -148,9 +148,9 @@ export default {
 
     if (this.params.chooseDayTextStart) {
       this.setChooseDay({start: this.params.chooseDayTextStart});
-      this.setDateParams(this.getSplitDate(this.params.chooseDayTextStart));
+      this.setGlobalDate(this.getSplitDate(this.params.chooseDayTextStart));
     } else {
-      this.setDateParams(this.todayObj);
+      this.setGlobalDate(this.todayObj);
     }
 
     if (this.params.chooseDayTextEnd) {
@@ -174,16 +174,13 @@ export default {
       }
     },
 
-    setDateParams (obj) {
-      this.setGlobalDate(obj);
-      this.constFlagArr();
-      this.constShowDayData();
-    },
-
     setGlobalDate (obj) {
       this.year = obj.y;
       this.month = obj.m;
       this.day = obj.d;
+
+      this.constFlagArr();
+      this.constShowDayData();
     },
 
     constFlagArr () {
@@ -221,7 +218,7 @@ export default {
     setMonth (month) {
       let result = this.getDateInf(new Date(this.year, month - 1, this.day));
       this.flagArr = null;
-      this.setDateParams(result);
+      this.setGlobalDate(result);
       this.$emit('changeDate', {
         startDate: result,
         id: this.params.id
@@ -233,18 +230,13 @@ export default {
         return;
       }
       
-      // 没有选择任何时间的时候，重置日历显示
+      // 重置日历显示
       if (!this.calendarResult.resultVal.startDate) {
-        this.setChooseDay({start: null, end: null});
+        this.resetChooseDay();
       }
 
-      // 设置时间
       this.calendarResult.setForDate(params);
-      
-      // 获取开始时间
-      if (this.calendarResult.resultVal.startDate) {
-        this.setChooseDay({start: this.calendarResult.resultVal.startDate});
-      }
+      this.setChooseDay({start: this.calendarResult.resultVal.startDate});
       
       // 选择某一天时
       if (this.type === 'default') {
@@ -253,8 +245,8 @@ export default {
       }
       
       // 选择时间范围
+      this.setChooseDay({end: this.calendarResult.resultVal.endDate});
       if (this.calendarResult.resultVal.endDate) {
-        this.setChooseDay({end: this.calendarResult.resultVal.endDate});
         this.doneChooseDate();
       }
     },
@@ -269,6 +261,10 @@ export default {
       }
     },
 
+    resetChooseDay () {
+      this.setChooseDay({start: null, end: null});
+    },
+
     doneChooseDate () {
       this.$emit('chooseDate', this.calendarResult.resultVal);
       this.changeDateResult = this.calendarResult.resultVal;
@@ -277,7 +273,7 @@ export default {
 
     resetCalendar () {
       this.changeDateResult = this.calendarResult.resetResult;
-      this.setChooseDay({start: null, end: null});
+      this.resetChooseDay();
       this.$emit('chooseDate', this.calendarResult.resetResult);
       this.hideCalendar();
       this.emitChangeDateParams();

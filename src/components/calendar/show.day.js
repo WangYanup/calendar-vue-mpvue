@@ -1,15 +1,8 @@
 import Calendar from '@/plugs/chinese-calendar'
 
-let FlagArr = null
-let LimitMinDate = null
-let LimitMaxDate = null
-let HolidayData = null
-
-export const setCalendarGlobalParams = ({flagArr, limitMaxDate, limitMinDate, holidayData}) => {
-  FlagArr = flagArr
-  LimitMinDate = limitMinDate
-  LimitMaxDate = limitMaxDate
-  HolidayData = holidayData
+let showDayGolbal = {}
+export const setCalendarGlobalParams = (objects) => {
+  showDayGolbal = Object.assign(showDayGolbal, objects)
 }
 
 class ShowDayObjectList {
@@ -79,10 +72,10 @@ class ShowDayRow {
 
   // 判断是否突出显示当天日期，例如当天有活动
   setHaveFlag () {
-    if (!FlagArr) {
+    if (!showDayGolbal.flagArr) {
       return
     }
-    FlagArr.some(item => {
+    showDayGolbal.flagArr.some(item => {
       if (parseInt(item.day) === this.monthDay) {
         this.obj.haveFlag = true
         return true
@@ -92,11 +85,11 @@ class ShowDayRow {
 
   // 判断是否为假期
   setHoliday () {
-    if (!HolidayData || !HolidayData[this.resultYear] || !HolidayData[this.resultYear][this.resultMonth]) {
+    if (!showDayGolbal.holidayData || !showDayGolbal.holidayData[this.resultYear] || !showDayGolbal.holidayData[this.resultYear][this.resultMonth]) {
       return
     }
 
-    let holidayArr = HolidayData[this.resultYear][this.resultMonth]
+    let holidayArr = showDayGolbal.holidayData[this.resultYear][this.resultMonth]
     if (holidayArr.length === 0) {
       return
     }
@@ -126,11 +119,11 @@ class ShowDayRow {
 
   setMinDateStatus () {
     // 限制选取最小日期
-    if (!LimitMinDate) {
+    if (!showDayGolbal.limitMinDate) {
       return
     }
     let targetDate = this.getTimestamp({y: this.resultYear, m: this.resultMonth, d: this.monthDay})
-    let limitDate = this.getTimestamp({y: LimitMinDate.y, m: LimitMinDate.m, d: LimitMinDate.d})
+    let limitDate = this.getTimestamp({y: showDayGolbal.limitMinDate.y, m: showDayGolbal.limitMinDate.m, d: showDayGolbal.limitMinDate.d})
     if (targetDate < limitDate) {
       this.obj.disabled = true
     }
@@ -138,11 +131,11 @@ class ShowDayRow {
 
   setMaxDateStatus () {
     // 限制选取最大日期
-    if (!LimitMaxDate) {
+    if (!showDayGolbal.limitMaxDate) {
       return
     }
     let targetDate = this.getTimestamp({y: this.resultYear, m: this.resultMonth, d: this.monthDay})
-    let limitDate = this.getTimestamp({y: LimitMaxDate.y, m: LimitMaxDate.m, d: LimitMaxDate.d})
+    let limitDate = this.getTimestamp({y: showDayGolbal.limitMaxDate.y, m: showDayGolbal.limitMaxDate.m, d: showDayGolbal.limitMaxDate.d})
     if (targetDate > limitDate) {
       this.obj.disabled = true
     }
