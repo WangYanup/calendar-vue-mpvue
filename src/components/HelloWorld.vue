@@ -8,6 +8,7 @@
         maxDate: '2020-1-1',
         id: 'aaaa'
       }"
+      type="rangeDay"
       :activity-data="dataForCalendar"
       :holiday-data="holidayData"
       @chooseDate="getChooseDate"
@@ -16,7 +17,11 @@
       v-if="showCalendar"
     ></com-calendar>
 
-    <div @click="toogleCalendar">{{!showCalendar?'显示': '隐藏'}}日历</div>
+    <div @click="toogleCalendar">点击{{!showCalendar?'显示': '隐藏'}}日历</div>
+    <div v-if="chooseDate">
+      <span>{{chooseDate.startDate}}</span>
+      <span v-if="chooseDate.endDate"> 至 {{chooseDate.endDate}}</span>
+    </div>
   </div>
 </template>
 
@@ -50,12 +55,12 @@ export default {
   },
   methods: {
     getChooseDate (e) {
-      console.log(e)
+      console.log('选择日期结果：', e)
       this.chooseDate = e
     },
 
     tapChangeDate (e) {
-      console.log('切换后的年月', e)
+      console.log('获取切换后的年月，使用此日期获取指定月份假日和特殊日期标记', e)
     },
 
     toogleCalendar () {

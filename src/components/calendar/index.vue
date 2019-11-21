@@ -1,12 +1,12 @@
 <template>
   <div class="calendar-container" v-if="showCalendar">
-    <div class="calendar-bg" @click="hideCalendar({emitStatus: true})"></div>
+    <div class="calendar-bg" @click="cancelChooseDate()"></div>
     <div class="calendar-body"
       @touchstart="bindTouchStart"
       @touchend="bindTouchEnd"
     >
       <div class="calendar-title">
-        <span class="calendar-title-cancle" @click="hideCalendar({emitStatus: true})">取消</span>
+        <span class="calendar-title-cancle" @click="cancelChooseDate()">取消</span>
         <div class="calendar-title-choose">
           <span class="calendar-title-icon calendar-title-icon-left" @click="preMonth"></span>
           <span class="calendar-title-show"><span>{{year}} - {{month}}</span></span>
@@ -49,6 +49,7 @@
 </template>
 <script>
 import CalendarResult from './calendar.result';
+import { setCalendarGlobalParams } from './show.day';
 import ShowDayObject from './show.day';
 
 export default {
@@ -65,9 +66,9 @@ export default {
    * :activityData  有活动的日期显示flag圆点 {year:{ month:[]}} 月和日小于10不可以有0，01 =》1
    *
    * 函数说明：
-   * @chooseDate  选择日期之后执行的函数 { data: ‘2018-11-28’, y: '2018', m: '11', d: '28', id: this.params.id};
+   * @chooseDate  选择日期之后执行的函数 { startDate: '2018-11-28', endDate: '2018-12-28', id: 'default' }
    * @hideChooseDate  日历隐藏时执行函数
-   * @changeDate  切换月份的时候执行函数，返回切换后的年月日。 { year: ‘2018’, month: ‘11’, day: ‘28’ };
+   * @changeDate  切换月份和取消选择日期执行函数，主要用于动态获取假日和特殊日期，如果重置日期startDate值为当天日期。 { startDate: '2018-11-28', endDate: '2018-12-28', id: 'default' }
    *
    * 问题解决：
    * 1.chinese-calendar.js 样式报错。
@@ -84,7 +85,7 @@ export default {
     holidayData: Object,
     type: {
       type: String,
-      default: 'rangeDay' // default, rangeDay
+      default: 'default' // default, rangeDay
     }
   },
   data () {
@@ -106,7 +107,8 @@ export default {
       touchObj: {},
       touchLimit: 30, // px
       calendarResult: null,
-      result: {}
+      result: {},
+      changeDateResult: {}
     };
   },
   watch: {
@@ -133,13 +135,7 @@ export default {
   },
   mounted () {
     this.calendarResult = new CalendarResult({id: this.params.id});
-
-    this.todayObj = {
-      y: new Date().getFullYear(),
-      m: new Date().getMonth() + 1,
-      d: new Date().getDate()
-    };
-
+    this.todayObj = this.getDateInf(new Date());;
     this.chooseToday = this.todayObj.y + '-' + this.todayObj.m + '-' + this.todayObj.d;
 
     if (this.params.minDate) {
@@ -170,9 +166,18 @@ export default {
       }
     },
 
+    getDateInf (date) {
+      return {
+        y: date.getFullYear(),
+        m: date.getMonth() + 1,
+        d: date.getDate()
+      }
+    },
+
     setDateParams (obj) {
       this.setGlobalDate(obj);
       this.constFlagArr();
+      this.constShowDayData();
     },
 
     setGlobalDate (obj) {
@@ -189,18 +194,19 @@ export default {
           this.flagArr = flagYear[parseInt(this.month)];
         }
       }
-
-      this.constShowDayData();
     },
 
     constShowDayData () {
-      this.dayData = new ShowDayObject({
-        year: this.year, 
-        month: this.month, 
+      setCalendarGlobalParams({
         flagArr: this.flagArr, 
         limitMaxDate: this.limitMaxDate, 
         limitMinDate: this.limitMinDate,
         holidayData: this.holidayData
+      })
+
+      this.dayData = new ShowDayObject({
+        year: this.year, 
+        month: this.month, 
       }).getVal();
     },
 
@@ -213,16 +219,13 @@ export default {
     },
 
     setMonth (month) {
-      let setDate = new Date(this.year, month - 1, this.day);
-      let result = {
-        y: setDate.getFullYear(),
-        m: setDate.getMonth() + 1,
-        d: setDate.getDate()
-      };
-
+      let result = this.getDateInf(new Date(this.year, month - 1, this.day));
       this.flagArr = null;
       this.setDateParams(result);
-      this.$emit('changeDate', result);
+      this.$emit('changeDate', {
+        startDate: result,
+        id: this.params.id
+      });
     },
 
     chooseDate (params) {
@@ -268,29 +271,35 @@ export default {
 
     doneChooseDate () {
       this.$emit('chooseDate', this.calendarResult.resultVal);
-      this.hideCalendar({emitStatus: false});
+      this.changeDateResult = this.calendarResult.resultVal;
+      this.hideCalendar();
     },
 
     resetCalendar () {
+      this.changeDateResult = this.calendarResult.resetResult;
       this.setChooseDay({start: null, end: null});
       this.$emit('chooseDate', this.calendarResult.resetResult);
-      this.hideCalendar({emitStatus: false});
+      this.hideCalendar();
+      this.emitChangeDateParams();
     },
 
     hideCalendar (e) {
       this.showCalendar = false;
-      if (e.emitStatus) {
-        this.emitGetActivityParams();
-      }
       this.$emit('hideChooseDate');
     },
- 
-    emitGetActivityParams () {
-      if (!this.params.chooseDayTextStart) {
-        return
-      } 
 
-      this.$emit('changeDate', {startDate: this.getSplitDate(this.params.chooseDayTextStart), endDate: this.getSplitDate(this.params.chooseDayTextEnd)});
+    cancelChooseDate () {
+      this.changeDateResult = {
+        id : this.params.id,
+        startDate : this.params.chooseDayTextStart ? this.getSplitDate(this.params.chooseDayTextStart) : this.todayObj,
+        endDate : this.params.chooseDayTextEnd ? this.getSplitDate(this.params.chooseDayTextEnd) : undefined
+      };
+      this.hideCalendar();
+      this.emitChangeDateParams();
+    },
+ 
+    emitChangeDateParams () {
+      this.$emit('changeDate', this.changeDateResult);
     },
 
     bindTouchStart (e) {
@@ -378,12 +387,12 @@ export default {
           }
 
           .calendar-title-icon-left {
-            background: url('../assets/calendar_arrow_left.png') no-repeat 50% 50%;
+            background: url('./calendar_arrow_left.png') no-repeat 50% 50%;
             background-size: contain;
           }
 
           .calendar-title-icon-right {
-            background: url('../assets/calendar_arrow_right.png') no-repeat 50% 50%;
+            background: url('./calendar_arrow_right.png') no-repeat 50% 50%;
             background-size: contain;
           }
 
