@@ -53,6 +53,7 @@ class ShowDayRow {
     this.monthDay = day.getDate()
     this.resultMonth = day.getMonth() + 1
     this.resultYear = day.getFullYear()
+    this.weekDay = this.setWeekDay(day)
     this.obj = {
       text: null,
       id: `${this.resultYear}-${this.resultMonth}-${this.monthDay}`,
@@ -67,7 +68,14 @@ class ShowDayRow {
     this.setLunarCalendar()
     this.setMinDateStatus()
     this.setMaxDateStatus()
-    this.constMonthData({weekDay: day.getDay(), index, inputMonth})
+    this.constMonthData({index, inputMonth})
+  }
+
+  setWeekDay (day) {
+    if (day.getDay() === 0) {
+      return 7
+    }
+    return day.getDay()
   }
 
   // 判断是否突出显示当天日期，例如当天有活动
@@ -145,7 +153,7 @@ class ShowDayRow {
     return new Date(y, m - 1, d).getTime()
   }
 
-  constMonthData ({weekDay, index, inputMonth}) {
+  constMonthData ({index, inputMonth}) {
     // 构造本月的日历数据
     if (this.resultMonth !== inputMonth) {
       this.result.push('')
@@ -158,13 +166,13 @@ class ShowDayRow {
       return
     }
 
-    this.setMonthFirstDay(weekDay)
+    this.setMonthFirstDay()
   }
 
   // 如果第一天的日期
   // @d 用于控制第一天显示的星期 （d = 0 开头为星期日 / d = 1 开头为星期一）
-  setMonthFirstDay (weekDay) {
-    for (let d = 1; d < weekDay; d++) {
+  setMonthFirstDay () {
+    for (let d = 1; d < this.weekDay; d++) {
       this.result.push('')
     }
 

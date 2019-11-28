@@ -299,25 +299,25 @@ export default {
     },
 
     bindTouchStart (e) {
-      if (e.mp) {
-        this.touchObj['start'] = e.mp.changedTouches[0].clientX;
-      } else {
-        this.touchObj['start'] = e.changedTouches[0].clientX;
-      }
+      this.setTouchObj({e, type: 'start'});
     },
 
     bindTouchEnd (e) {
-      if (e.mp) {
-        this.touchObj['end'] = e.mp.changedTouches[0].clientX;
-      } else {
-        this.touchObj['end'] = e.changedTouches[0].clientX;
-      }
+      this.setTouchObj({e, type: 'end'});
 
       if (this.touchObj.end - this.touchObj.start > this.touchLimit) {
         this.preMonth();
       } else
       if (this.touchObj.end - this.touchObj.start < -this.touchLimit) {
         this.nextMonth();
+      }
+    },
+
+    setTouchObj ({e, type}) {
+      if (e.mp) {
+        this.touchObj[type] = e.mp.changedTouches[0].clientX;
+      } else {
+        this.touchObj[type] = e.changedTouches[0].clientX;
       }
     }
   }
